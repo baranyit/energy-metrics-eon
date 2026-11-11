@@ -28,6 +28,9 @@ from .const import (
 )
 
 
+PLACEHOLDERS = {"script_url_prefix": SCRIPT_URL_PREFIX}
+
+
 def _schema(defaults: Mapping[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
@@ -105,7 +108,10 @@ class EonConfigFlow(ConfigFlow, domain=DOMAIN):
                     title=user_input[CONF_NAME], data=user_input
                 )
         return self.async_show_form(
-            step_id="user", data_schema=_schema(user_input or {}), errors=errors
+            step_id="user",
+            data_schema=_schema(user_input or {}),
+            errors=errors,
+            description_placeholders=PLACEHOLDERS,
         )
 
     async def async_step_reconfigure(
@@ -123,6 +129,7 @@ class EonConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reconfigure",
             data_schema=_schema(user_input or entry.data),
             errors=errors,
+            description_placeholders=PLACEHOLDERS,
         )
 
     async def async_step_reauth(
@@ -144,4 +151,5 @@ class EonConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="reauth_confirm",
             data_schema=vol.Schema({vol.Required(CONF_TOKEN): str}),
             errors=errors,
+            description_placeholders=PLACEHOLDERS,
         )

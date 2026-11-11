@@ -41,7 +41,7 @@
       }
     },
     "error": {
-      "invalid_url": "A címnek https://script.google.com/ kezdetűnek kell lennie.",
+      "invalid_url": "A címnek {script_url_prefix} kezdetűnek kell lennie.",
       "invalid_auth": "Az Apps Script elutasította a tokent.",
       "cannot_connect": "Nem sikerült elérni az Apps Scriptet. Ellenőrizd, hogy webalkalmazásként, „Bárki” hozzáféréssel van-e közzétéve.",
       "no_columns": "Legalább az egyik oszlopnevet add meg."

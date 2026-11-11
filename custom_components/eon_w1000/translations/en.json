@@ -41,7 +41,7 @@
       }
     },
     "error": {
-      "invalid_url": "The URL must start with https://script.google.com/.",
+      "invalid_url": "The URL must start with {script_url_prefix}.",
       "invalid_auth": "The Apps Script rejected the token.",
       "cannot_connect": "Could not reach the Apps Script. Check that it is deployed as a web app with access set to 'Anyone'.",
       "no_columns": "Enter at least one column name."
