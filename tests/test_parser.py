@@ -191,6 +191,54 @@ class ParserTest(unittest.TestCase):
             parser.parse_export(self._long_xlsx({"POD_1": rows}), COLS)
         self.assertIn("+Ri", str(ctx.exception))
 
+    def _pod_file(self, pod, variables=("+A",), value=1):
+        rows = [
+            (pod, datetime(2026, 11, 4, 0, 15 * i),
+             [(var, value, "kvarh" if var == "+Ri" else "kWh") for var in variables])
+            for i in range(4)
+        ]
+        return self._long_xlsx({"POD_1": rows})
+
+    def test_attachments_import_and_export_in_separate_files(self):
+        files = [("a.xlsx", self._pod_file("P", ("+A",))), ("b.xlsx", self._pod_file("P", ("-A",), 2))]
+        result = parser.parse_attachments(files, COLS)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].series["import"], {utc(2026, 11, 3, 23): 4.0})
+        self.assertEqual(result[1].series["export"], {utc(2026, 11, 3, 23): 8.0})
+
+    def test_attachments_other_pod_skipped(self):
+        files = [("a.xlsx", self._pod_file("POD-A")), ("b.xlsx", self._pod_file("POD-B", value=2))]
+        result = parser.parse_attachments(files, COLS, pod="POD-B")
+        self.assertEqual([r.pod for r in result], ["POD-B"])
+        # an e-mail only about another metering point is not an error
+        self.assertEqual(parser.parse_attachments(files[:1], COLS, pod="POD-B"), [])
+
+    def test_attachments_file_without_variables_skipped_if_another_has_data(self):
+        files = [("reactive.xlsx", self._pod_file("P", ("+Ri",))), ("a.xlsx", self._pod_file("P"))]
+        self.assertEqual(len(parser.parse_attachments(files, COLS)), 1)
+        with self.assertRaises(parser.ParseError) as ctx:
+            parser.parse_attachments(files[:1], COLS)
+        self.assertIn("reactive.xlsx", str(ctx.exception))
+        self.assertIn("+Ri", str(ctx.exception))
+
+    def test_attachments_unreadable_file_is_an_error(self):
+        files = [("a.xlsx", self._pod_file("P")), ("broken.csv", b"not an export")]
+        with self.assertRaises(parser.ParseError) as ctx:
+            parser.parse_attachments(files, COLS)
+        self.assertIn("broken.csv", str(ctx.exception))
+
+    def test_attachments_several_pods_without_configured_pod(self):
+        files = [("a.xlsx", self._pod_file("POD-A")), ("b.xlsx", self._pod_file("POD-B"))]
+        with self.assertRaises(parser.ParseError) as ctx:
+            parser.parse_attachments(files, COLS)
+        self.assertIn("POD-A", str(ctx.exception))
+        self.assertIn("POD-B", str(ctx.exception))
+        # also across e-mails: POD-A was imported earlier
+        with self.assertRaises(parser.ParseError):
+            parser.parse_attachments(files[1:], COLS, known_pod="POD-A")
+        self.assertEqual(len(parser.parse_attachments(files[:1], COLS, known_pod="POD-A")), 1)
+        self.assertEqual(parser.parse_attachments([], COLS), [])
+
     def test_leading_partial_hour_dropped(self):
         lines = ["Dátum/Idő,+A"]
         lines += [f"{ts},1" for ts in quarter_rows(datetime(2026, 11, 9, 0, 30), 6)]

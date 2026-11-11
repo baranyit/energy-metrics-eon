@@ -42,9 +42,8 @@ class BridgeClient:
         self._url = url
         self._token = token
 
-    async def fetch(self, after_ms: int, limit: int) -> list[Message]:
-        """Return messages newer than after_ms, oldest first."""
-        payload = {"token": self._token, "after": after_ms, "limit": limit}
+    async def _post(self, payload: dict) -> dict:
+        payload = {"token": self._token, **payload}
         try:
             # Apps Script answers the POST with a 302 that must be followed by a GET;
             # aiohttp does exactly that by default.
@@ -70,6 +69,24 @@ class BridgeClient:
                 raise BridgeAuthError("The Apps Script rejected the token")
             detail = body.get("detail", "") if isinstance(body, dict) else ""
             raise BridgeError(f"Apps Script error: {error} {detail}".strip())
+        return body
+
+    async def mark_processed(self, ids: list[str], after_ms: int) -> int | None:
+        """Label, mark as read and archive the given export e-mails.
+
+        Returns how many were marked, or None if the deployed script is an
+        older version without this feature. Such a script treats the request
+        as a fetch; after_ms and the limit keep its answer small.
+        """
+        body = await self._post(
+            {"action": "mark_processed", "ids": ids, "after": after_ms, "limit": 1}
+        )
+        marked = body.get("marked")
+        return marked if isinstance(marked, int) else None
+
+    async def fetch(self, after_ms: int, limit: int) -> list[Message]:
+        """Return messages newer than after_ms, oldest first."""
+        body = await self._post({"after": after_ms, "limit": limit})
 
         messages: list[Message] = []
         for raw in body.get("messages", []):

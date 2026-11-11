@@ -24,6 +24,7 @@ Timestamps are Hungarian local time and mark the start of the interval.
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import io
@@ -50,6 +51,14 @@ _H_UNIT = "mértékegység"
 
 class ParseError(Exception):
     """The file could not be interpreted as a W1000 interval export."""
+
+
+class OtherPodError(ParseError):
+    """The file is a valid export, but of another metering point."""
+
+
+class NoVariablesError(ParseError):
+    """The file is a valid export, but has none of the configured variables."""
 
 
 @dataclass
@@ -397,7 +406,7 @@ def parse_export(
     pods = sorted(p for p in by_pod if p)
     if not by_pod:
         if variables:
-            raise ParseError(
+            raise NoVariablesError(
                 f"None of the configured variables {sorted(columns.values())} were "
                 f"found; variables in the file: {sorted(variables)}"
             )
@@ -406,7 +415,9 @@ def parse_export(
     wanted_pod = (pod or "").strip()
     if wanted_pod:
         if wanted_pod not in by_pod:
-            raise ParseError(f"POD '{wanted_pod}' is not in the file; PODs found: {pods}")
+            raise OtherPodError(
+                f"POD '{wanted_pod}' is not in the file; PODs found: {pods}"
+            )
         chosen = wanted_pod
     elif len(by_pod) == 1:
         chosen = next(iter(by_pod))
@@ -428,3 +439,56 @@ def parse_export(
         pods=pods,
         intervals=intervals,
     )
+
+
+def check_same_pod(pods: Iterable[str | None], configured_pod: str | None) -> None:
+    """Refuse to mix the data of several metering points.
+
+    Without a configured POD every file with a single metering point is
+    accepted, so files of different points would overwrite each other.
+    pods: the PODs of the files to import plus the one imported earlier.
+    """
+    if (configured_pod or "").strip():
+        return  # parse_export already picked that POD from every file
+    found = sorted({pod for pod in pods if pod})
+    if len(found) > 1:
+        raise ParseError(
+            f"The exports belong to several metering points {found}; "
+            "set the POD in the integration settings"
+        )
+
+
+def parse_attachments(
+    files: Iterable[tuple[str, bytes]],
+    columns: dict[str, str],
+    *,
+    interval_end: bool = False,
+    pod: str | None = None,
+    known_pod: str | None = None,
+) -> list[ParsedExport]:
+    """Parse the data files of one e-mail, keeping those meant for this entry.
+
+    files: (name, content) pairs. known_pod: the POD imported earlier, if any.
+
+    A file of another metering point is skipped. A file without any of the
+    configured variables is skipped as long as another file of the e-mail has
+    data; if none has, that is most likely a wrong column name, so it is an
+    error. Anything else that cannot be read is an error too.
+    """
+    parsed: list[ParsedExport] = []
+    no_variables: ParseError | None = None
+    for name, data in files:
+        try:
+            parsed.append(
+                parse_export(data, columns, interval_end=interval_end, pod=pod)
+            )
+        except OtherPodError:
+            continue
+        except NoVariablesError as err:
+            no_variables = no_variables or ParseError(f"'{name}': {err}")
+        except ParseError as err:
+            raise ParseError(f"'{name}': {err}") from err
+    if not parsed and no_variables:
+        raise no_variables
+    check_same_pod([known_pod, *(p.pod for p in parsed)], pod)
+    return parsed

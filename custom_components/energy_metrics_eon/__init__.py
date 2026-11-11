@@ -67,7 +67,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         except ParseError as err:
             raise HomeAssistantError(f"Cannot interpret '{path}': {err}") from err
 
-        written = await coordinator.async_import_parsed(parsed)
+        try:
+            written = await coordinator.async_import_parsed(parsed)
+        except ParseError as err:
+            raise HomeAssistantError(f"Cannot import '{path}': {err}") from err
         await coordinator.async_refresh_public_data()
         return {
             "layout": parsed.layout,

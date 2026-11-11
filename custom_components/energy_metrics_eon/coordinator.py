@@ -33,7 +33,13 @@ from .const import (
     UPDATE_INTERVAL,
 )
 from .merge import hourly_from_intervals, merge_intervals
-from .parser import ParsedExport, ParseError, parse_export
+from .parser import (
+    ParsedExport,
+    ParseError,
+    check_same_pod,
+    parse_attachments,
+    parse_export,
+)
 from .schedule import next_check, should_poll
 from .statistics import async_import_hourly
 
@@ -83,6 +89,18 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
             pod=self.config_entry.data.get(CONF_POD) or None,
         )
 
+    def parse_files(
+        self, files: list[tuple[str, bytes]], known_pod: str | None
+    ) -> list[ParsedExport]:
+        """Parse the data files of one e-mail with this entry's settings (blocking)."""
+        return parse_attachments(
+            files,
+            self._columns(),
+            interval_end=self.config_entry.data.get(CONF_INTERVAL_END, False),
+            pod=self.config_entry.data.get(CONF_POD) or None,
+            known_pod=known_pod,
+        )
+
     async def _load_state(self) -> dict:
         if self._state is None:
             self._state = await self._store.async_load() or {}
@@ -94,6 +112,10 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
             self._state.setdefault("intervals", {})
             # True while an e-mail is waiting to be (re)processed after an error
             self._state.setdefault("retry", False)
+            # metering point of the imported data, to keep others out of it
+            self._state.setdefault("pod", None)
+            # imported e-mails the script has not labelled as processed yet
+            self._state.setdefault("unmarked", [])
         return self._state
 
     def _last_email(self, state: dict) -> datetime | None:
@@ -107,9 +129,13 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
         keep their stored value. The affected hours are then recomputed from
         the merged intervals, so re-sent data is never added up and an
         incomplete file never lowers an hour that was already complete.
-        Returns the hourly values written, per kind.
+        Returns the hourly values written, per kind. Raises ParseError if the
+        file belongs to another metering point than the data imported so far.
         """
         state = await self._load_state()
+        check_same_pod([state["pod"], parsed.pod], self.config_entry.data.get(CONF_POD))
+        if parsed.pod:
+            state["pod"] = parsed.pod
         written: dict[str, dict[datetime, float]] = {}
         for kind, intervals in parsed.intervals.items():
             if not intervals:
@@ -162,30 +188,38 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
             for message in messages:  # oldest first, so newer data wins
                 if message.id in state["seen"]:
                     continue
-                for attachment in message.attachments:
-                    if not attachment.name.lower().endswith(DATA_EXTENSIONS):
-                        continue
-                    try:
-                        parsed = await self.hass.async_add_executor_job(
-                            self.parse, attachment.data
-                        )
-                    except ParseError as err:
-                        # Stop here without advancing, so the e-mail is retried
-                        # (hourly, ignoring the quiet period) once the
-                        # configuration or the parser is fixed.
-                        state["retry"] = True
-                        await self._store.async_save(state)
-                        raise UpdateFailed(
-                            f"Cannot read '{attachment.name}' from the e-mail "
-                            f"'{message.subject}': {err}"
-                        ) from err
-                    await self.async_import_parsed(parsed)
+                files = [
+                    (attachment.name, attachment.data)
+                    for attachment in message.attachments
+                    if attachment.name.lower().endswith(DATA_EXTENSIONS)
+                ]
+                try:
+                    exports = await self.hass.async_add_executor_job(
+                        self.parse_files, files, state["pod"]
+                    )
+                    for parsed in exports:  # in order, so later files win
+                        await self.async_import_parsed(parsed)
+                except ParseError as err:
+                    # Stop here without advancing, so the e-mail is retried
+                    # (hourly, ignoring the quiet period) once the
+                    # configuration or the parser is fixed. Files imported
+                    # before the error are simply imported again.
+                    state["retry"] = True
+                    await self._store.async_save(state)
+                    raise UpdateFailed(
+                        f"Cannot process the e-mail '{message.subject}': {err}"
+                    ) from err
 
                 state["cursor"] = max(state["cursor"], message.date_ms)
                 state["seen"] = [*state["seen"], message.id][-SEEN_IDS_KEPT:]
-                state["last_email"] = dt_util.utc_from_timestamp(
-                    state["cursor"] / 1000
-                ).isoformat()
+                if exports:
+                    # An e-mail without data for this metering point (e.g. the
+                    # export of another one) must not start the quiet period,
+                    # and is left alone in the mailbox.
+                    state["last_email"] = dt_util.utc_from_timestamp(
+                        state["cursor"] / 1000
+                    ).isoformat()
+                    state["unmarked"] = [*state["unmarked"], message.id][-SEEN_IDS_KEPT:]
                 await self._store.async_save(state)
 
             if messages:  # already seen ones still move the cursor
@@ -198,7 +232,29 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
         if state["retry"]:
             state["retry"] = False
             await self._store.async_save(state)
+        await self._async_mark_processed(state)
         return self._public_data(state)
+
+    async def _async_mark_processed(self, state: dict) -> None:
+        """Have the script label, mark as read and archive the imported e-mails.
+
+        Purely cosmetic for the mailbox, so a failure never fails the import;
+        the ids are kept and sent again with the next poll.
+        """
+        if not state["unmarked"]:
+            return
+        try:
+            marked = await self._client.mark_processed(state["unmarked"], state["cursor"])
+        except BridgeError as err:
+            _LOGGER.warning("Could not mark the imported e-mails as processed: %s", err)
+            return
+        if marked is None:
+            _LOGGER.debug(
+                "The deployed Apps Script cannot mark e-mails as processed; "
+                "update it from apps_script/Code.gs to get that"
+            )
+        state["unmarked"] = []
+        await self._store.async_save(state)
 
     async def async_poll_now(self) -> None:
         """Ask for new e-mails now, ignoring the quiet period."""

@@ -50,7 +50,8 @@ E.ON portál ──napi e-mail──▶ Gmail ◀────── lekérdezés
 - **A Home Assistant zárt marad.** Csak kimenő kéréseket indít, nem kell kinyitni az internet
   felé.
 - **A Gmail zárt marad.** A saját Google-fiókodban futó kis Apps Script csak a megadott tárgyú
-  leveleket adja ki, és csak a titkos tokennel. Csak olvas.
+  leveleket adja ki, és csak a titkos tokennel. Semmit nem töröl; csak a beolvasott leveleket teszi rendbe
+  (címke, olvasott, archivált).
 - **Kevés lekérdezés.** Minden levél után 22 óra szünet következik, utána óránként ellenőriz
   (lásd: [mikor ellenőrzi a leveleket](#mikor-ellenőrzi-a-leveleket)).
 
@@ -92,6 +93,16 @@ Home Assistant 2024.12 vagy újabb kell hozzá, valamint az `openpyxl` (automati
    az **Engedélyezés** gombra.
 4. **Telepítés → Új telepítés → Webalkalmazás**: futtatás *saját nevemben*, hozzáférés: *Bárki*.
    Másold ki a `…/exec` végű URL-t.
+
+Miután a Home Assistant beolvasott egy levelet, a script ráteszi az
+`energy-metrics-eon-processed` címkét, olvasottnak jelöli és archiválja (kikerül a beérkezett
+levelek közül, de nem törlődik). A címke neve és mindkét viselkedés módosítható vagy
+kikapcsolható a script elején lévő `PROCESSED_LABEL`, `MARK_READ` és `ARCHIVE` sorokkal. Más
+mérési pont leveleihez nem nyúl.
+
+Már telepített script frissítéséhez másold be az új kódot, mentsd el, majd **Telepítés →
+Telepítések kezelése → Szerkesztés → Verzió: Új verzió → Telepítés**. Az URL és a token
+változatlan marad.
 
 A `rotateToken` függvény futtatásával a token bármikor lecserélhető. Az engedélykérés a teljes
 Gmail-hozzáférést említi, mert az Apps Script `GmailApp` szolgáltatásának nincs szűkebb
@@ -170,6 +181,9 @@ időszak többször is importálható, az értékek felülíródnak, nem dupláz
   hiányzó negyedórák pedig megtartják a már tárolt értéküket. Az órás értékeket mindig ebből
   számolja újra, így az átfedő vagy ismételten elküldött adatok nem adódnak össze, és egy hiányos
   fájl nem csökkentheti egy már teljes óra fogyasztását.
+- **Egy levél több csatolmányát** sorban mind beolvassa. A más mérési ponthoz tartozó fájlt
+  kihagyja, ahogy azt is, amelyben nincs beállított mérőváltozó, feltéve hogy egy másik
+  csatolmányban van adat.
 - **A még nem teljes óra** (pl. a nap végén levágott export) a meglévő negyedórák összegével
   kerül be, és a következő exporttal kiegészül.
 
@@ -177,8 +191,10 @@ időszak többször is importálható, az értékek felülíródnak, nem dupláz
 
 - Az adatok nem élők: a portál napi levelét követik, jellemzően egynapos késéssel.
 - Postafiókként csak a Gmail használható, az Apps Scripten keresztül.
-- Egy bejegyzés egy mérési pontot kezel. Ha az export több mérési pontot tartalmaz, add meg a POD
-  azonosítót; több mérési ponthoz vedd fel az integrációt többször.
+- Egy bejegyzés egy mérési pontot kezel. Ha az exportok több mérési pontot tartalmaznak (egy
+  fájlban, több csatolmányban vagy külön levelekben), add meg a POD azonosítót, különben a
+  feldolgozás hibával megáll, hogy az adatok ne keveredjenek. Több mérési ponthoz vedd fel az
+  integrációt többször.
 - A felület a Home Assistant nyelvét követi (angol és magyar), de a statisztikák neve angol
   (pl. „E.ON consumption”).
 - A bejegyzés neve később nem módosítható, mert ebből képződik a statisztika azonosítója.
