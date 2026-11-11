@@ -57,6 +57,9 @@
       "last_email": {
         "name": "Last processed e-mail"
       },
+      "next_check": {
+        "name": "Next e-mail check"
+      },
       "last_data_import": {
         "name": "Newest consumption data"
       },
@@ -77,6 +80,16 @@
         "config_entry_id": {
           "name": "Metering point",
           "description": "Only needed when several are configured."
+        }
+      }
+    },
+    "check_now": {
+      "name": "Check for e-mails now",
+      "description": "Ask the Apps Script for new export e-mails now, even during the 22-hour pause after the last e-mail.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Metering point",
+          "description": "Leave empty to check all."
         }
       }
     }

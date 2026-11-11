@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 .claude/
-# valódi export fájlok (mérési pont azonosítót és fogyasztási adatot tartalmaznak)
+# real export files (contain the metering point id and consumption data)
 MertErtekek_*
 adatok*.xlsx
 *.xlsx

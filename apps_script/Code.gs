@@ -1,24 +1,24 @@
 /**
- * E.ON W1000 export -> Home Assistant híd (pull változat).
+ * E.ON W1000 export -> Home Assistant bridge (pull mode).
  *
- * A script a saját Gmail fiókodban fut. A Home Assistant integráció POST
- * kéréssel kérdezi le tőle az E.ON ütemezett export leveleinek csatolmányait.
- * A script semmit nem módosít a postafiókban, és csak a lenti QUERY-re
- * illeszkedő leveleket adja ki, kizárólag érvényes tokennel.
+ * Runs in your own Gmail account. The Home Assistant integration fetches the
+ * attachments of the E.ON scheduled export e-mails from it with a POST
+ * request. The script never modifies the mailbox, and it only returns
+ * messages that match QUERY below, and only for a valid token.
  *
- * Telepítés: lásd a README.md "Apps Script" fejezetét.
+ * Setup: see the "Apps Script" section of README.md.
  */
 
-// Gmail keresés, amire az export levelek illeszkednek. A tárgyat az
-// ütemezett export beállításakor te adod meg a portálon; legyen egyedi.
+// Gmail search matching the export e-mails. You choose the subject when
+// setting up the scheduled export on the portal; keep it unique.
 const QUERY = 'subject:"eon-energy-metrics" has:attachment';
 
-// Egy válaszban legfeljebb ennyi levél megy ki.
+// Maximum number of messages in one response.
 const MAX_LIMIT = 10;
 
 /**
- * Egyszer futtasd le kézzel a szerkesztőből: engedélyt kér a Gmailhez,
- * létrehozza a titkos tokent, és kiírja a naplóba.
+ * Run once by hand from the editor: asks for Gmail access, creates the
+ * secret token and writes it to the execution log.
  */
 function setup() {
   const props = PropertiesService.getScriptProperties();
@@ -28,11 +28,11 @@ function setup() {
     props.setProperty('TOKEN', token);
   }
   const found = GmailApp.search(QUERY, 0, 5).length;
-  Logger.log('Token (ezt add meg a Home Assistantban): ' + token);
-  Logger.log('A keresésre illeszkedő levélszálak (max 5): ' + found);
+  Logger.log('Token (enter this in Home Assistant): ' + token);
+  Logger.log('Threads matching the search (max 5): ' + found);
 }
 
-/** Új tokent generál; a régi azonnal érvénytelen lesz. */
+/** Creates a new token; the old one stops working immediately. */
 function rotateToken() {
   PropertiesService.getScriptProperties().deleteProperty('TOKEN');
   setup();
@@ -65,7 +65,7 @@ function doGet() {
   return json_({ ok: false, error: 'use_post' });
 }
 
-/** Az `after` (ms) utáni levelek, időrendben, legfeljebb `limit` darab. */
+/** Messages newer than `after` (ms), oldest first, at most `limit`. */
 function collect_(after, limit) {
   let query = QUERY;
   if (after > 0) {
