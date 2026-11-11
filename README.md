@@ -16,7 +16,7 @@ It reads the portal's scheduled e-mail export. No scraping, no IMAP, no open por
 
 🇭🇺 **[Magyar nyelvű leírás](README.hu.md)**
 
-> **Status: beta (0.1.0).** Data typically arrives a day late, because the portal sends its export
+> **Status: beta (0.3.0).** Data typically arrives a day late, because the portal sends its export
 > once a day. This is an unofficial project, not affiliated with or endorsed by E.ON. Use it at
 > your own risk.
 
