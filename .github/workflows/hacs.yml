@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   hacs:
-    name: HACS validation
+    name: HACS
     runs-on: ubuntu-latest
     steps:
       - uses: hacs/action@main
