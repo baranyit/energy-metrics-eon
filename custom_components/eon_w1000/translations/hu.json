@@ -1,0 +1,84 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "E.ON W1000 e-mail export",
+        "description": "Add meg a Gmail fiókodban közzétett Apps Script webalkalmazás címét és a tokent (részletek a README-ben).",
+        "data": {
+          "name": "Név",
+          "script_url": "Apps Script webalkalmazás URL (…/exec)",
+          "token": "Token",
+          "import_column": "Fogyasztás oszlop neve",
+          "export_column": "Visszatáplálás oszlop neve",
+          "interval_end": "Az időbélyeg az intervallum végét jelöli",
+          "pod": "Mérési pont (POD) azonosító"
+        },
+        "data_description": {
+          "name": "Ebből képződik a statisztika azonosítója, később nem módosítható.",
+          "import_column": "Az export fájl fejlécében szereplő mérőváltozó, pl. +A. Üresen hagyható.",
+          "export_column": "Pl. -A. Üresen hagyható, ha nincs visszatáplálás.",
+          "pod": "Csak akkor kell, ha az export több mérési pontot tartalmaz (pl. HU000…)."
+        }
+      },
+      "reconfigure": {
+        "title": "E.ON W1000 beállításai",
+        "data": {
+          "name": "Név (nem módosítható)",
+          "script_url": "Apps Script webalkalmazás URL (…/exec)",
+          "token": "Token",
+          "import_column": "Fogyasztás oszlop neve",
+          "export_column": "Visszatáplálás oszlop neve",
+          "interval_end": "Az időbélyeg az intervallum végét jelöli",
+          "pod": "Mérési pont (POD) azonosító"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Új token",
+        "description": "Az Apps Script elutasította a tokent. Add meg az érvényeset.",
+        "data": {
+          "token": "Token"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "A címnek https://script.google.com/ kezdetűnek kell lennie.",
+      "invalid_auth": "Az Apps Script elutasította a tokent.",
+      "cannot_connect": "Nem sikerült elérni az Apps Scriptet. Ellenőrizd, hogy webalkalmazásként, „Bárki” hozzáféréssel van-e közzétéve.",
+      "no_columns": "Legalább az egyik oszlopnevet add meg."
+    },
+    "abort": {
+      "already_configured": "Ilyen néven már van beállítva mérési pont.",
+      "reconfigure_successful": "A beállítások frissültek.",
+      "reauth_successful": "A token frissült."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_email": {
+        "name": "Utolsó feldolgozott e-mail"
+      },
+      "last_data_import": {
+        "name": "Legfrissebb fogyasztási adat"
+      },
+      "last_data_export": {
+        "name": "Legfrissebb visszatáplálási adat"
+      }
+    }
+  },
+  "services": {
+    "import_file": {
+      "name": "Export fájl importálása",
+      "description": "Kézzel letöltött W1000 CSV/XLSX fájl beolvasása a statisztikákba (pl. korábbi adatok visszatöltéséhez).",
+      "fields": {
+        "path": {
+          "name": "Fájl útvonala",
+          "description": "A Home Assistant által olvasható, engedélyezett könyvtárban lévő fájl."
+        },
+        "config_entry_id": {
+          "name": "Mérési pont",
+          "description": "Csak akkor kell, ha több van beállítva."
+        }
+      }
+    }
+  }
+}

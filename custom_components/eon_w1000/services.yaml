@@ -1,0 +1,12 @@
+import_file:
+  fields:
+    path:
+      required: true
+      example: /config/eon/export.csv
+      selector:
+        text:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: eon_w1000

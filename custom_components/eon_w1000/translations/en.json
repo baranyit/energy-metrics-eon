@@ -1,0 +1,84 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "E.ON W1000 e-mail export",
+        "description": "Enter the URL and token of the Apps Script web app deployed in your Gmail account (see the README).",
+        "data": {
+          "name": "Name",
+          "script_url": "Apps Script web app URL (…/exec)",
+          "token": "Token",
+          "import_column": "Consumption column name",
+          "export_column": "Feed-in column name",
+          "interval_end": "Timestamps mark the end of the interval",
+          "pod": "Metering point (POD) id"
+        },
+        "data_description": {
+          "name": "Used to build the statistic ids; cannot be changed later.",
+          "import_column": "Meter variable in the export header, e.g. +A. May be left empty.",
+          "export_column": "E.g. -A. Leave empty if there is no feed-in.",
+          "pod": "Only needed when the export contains several metering points (e.g. HU000…)."
+        }
+      },
+      "reconfigure": {
+        "title": "E.ON W1000 settings",
+        "data": {
+          "name": "Name (cannot be changed)",
+          "script_url": "Apps Script web app URL (…/exec)",
+          "token": "Token",
+          "import_column": "Consumption column name",
+          "export_column": "Feed-in column name",
+          "interval_end": "Timestamps mark the end of the interval",
+          "pod": "Metering point (POD) id"
+        }
+      },
+      "reauth_confirm": {
+        "title": "New token",
+        "description": "The Apps Script rejected the token. Enter the valid one.",
+        "data": {
+          "token": "Token"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "The URL must start with https://script.google.com/.",
+      "invalid_auth": "The Apps Script rejected the token.",
+      "cannot_connect": "Could not reach the Apps Script. Check that it is deployed as a web app with access set to 'Anyone'.",
+      "no_columns": "Enter at least one column name."
+    },
+    "abort": {
+      "already_configured": "A metering point with this name already exists.",
+      "reconfigure_successful": "Settings updated.",
+      "reauth_successful": "Token updated."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_email": {
+        "name": "Last processed e-mail"
+      },
+      "last_data_import": {
+        "name": "Newest consumption data"
+      },
+      "last_data_export": {
+        "name": "Newest feed-in data"
+      }
+    }
+  },
+  "services": {
+    "import_file": {
+      "name": "Import export file",
+      "description": "Load a manually downloaded W1000 CSV/XLSX file into statistics (e.g. to backfill history).",
+      "fields": {
+        "path": {
+          "name": "File path",
+          "description": "A file in a directory Home Assistant is allowed to read."
+        },
+        "config_entry_id": {
+          "name": "Metering point",
+          "description": "Only needed when several are configured."
+        }
+      }
+    }
+  }
+}

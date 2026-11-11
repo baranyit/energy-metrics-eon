@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+.claude/
+# valódi export fájlok (mérési pont azonosítót és fogyasztási adatot tartalmaznak)
+MertErtekek_*
+adatok*.xlsx
+*.xlsx
+*.csv
+samples/
