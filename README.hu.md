@@ -16,7 +16,7 @@ A portál ütemezett e-mail exportját dolgozza fel. Nincs scraping, nincs IMAP,
 
 🇬🇧 [English version](README.md)
 
-> **Állapot: béta (0.1.0).** Az adatok jellemzően egynapos késéssel érkeznek, mert a portál
+> **Állapot: béta (0.3.0).** Az adatok jellemzően egynapos késéssel érkeznek, mert a portál
 > naponta egyszer küldi az exportot. Ez egy nem hivatalos projekt, nem kapcsolódik az E.ON-hoz,
 > és az E.ON nem támogatja. Csak saját felelősségre használd.
 

@@ -1,5 +1,6 @@
 {
   "name": "Energy Monitoring for E.ON Hungary",
+  "country": "HU",
   "homeassistant": "2024.12.0",
   "render_readme": true
 }
