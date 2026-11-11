@@ -40,8 +40,8 @@ class EonTimestampSensor(CoordinatorEntity[EonCoordinator], SensorEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
-            manufacturer="E.ON",
-            model="W1000",
+            manufacturer="E.ON Hungary",
+            model="Energy Monitoring",
             entry_type=DeviceEntryType.SERVICE,
         )
 
