@@ -50,7 +50,8 @@ E.ON portal ──daily e-mail──▶ Gmail ◀────── polling ─�
 - **Home Assistant stays private.** It only makes outgoing requests; it does not need to be
   reachable from the internet.
 - **Gmail stays private.** A small Apps Script in your own Google account hands over only the
-  e-mails with the configured subject, and only for a secret token. It is read-only.
+  e-mails with the configured subject, and only for a secret token. It never deletes anything; it only tidies up the e-mails that
+  were imported (label, read, archived).
 - **Few requests.** After each e-mail the integration pauses for 22 hours, then checks hourly
   (see [when e-mails are checked](#when-are-e-mails-checked)).
 
@@ -88,6 +89,15 @@ Requires Home Assistant 2024.12 or newer and `openpyxl` (installed automatically
    **Advanced → Go to … (unsafe)**, then **Allow**.
 4. **Deploy → New deployment → Web app**: execute as *Me*, access: *Anyone*. Copy the URL ending
    in `…/exec`.
+
+Once Home Assistant has imported an e-mail, the script gives it the
+`energy-metrics-eon-processed` label, marks it as read and archives it (it leaves the inbox but is
+not deleted). The label name and both behaviours can be changed or switched off with the
+`PROCESSED_LABEL`, `MARK_READ` and `ARCHIVE` lines at the top of the script. E-mails of another
+metering point are left untouched.
+
+To update an already deployed script, paste the new code, save, then **Deploy → Manage
+deployments → Edit → Version: New version → Deploy**. The URL and the token stay the same.
 
 Run `rotateToken` to replace the token at any time. The consent screen mentions full Gmail access
 because Apps Script's `GmailApp` service has no narrower scope.
@@ -162,6 +172,9 @@ same period can be imported any number of times: values are replaced, never adde
   from a file keep their stored value. Hourly values are always recomputed from these, so
   overlapping or re-sent data is never added up and an incomplete file can never lower an hour
   that was already complete.
+- **Several attachments in one e-mail** are all imported, in order. A file of another metering
+  point is skipped, and so is a file without any of the configured meter variables as long as
+  another attachment has data.
 - **Incomplete hours** (e.g. an export cut off at the end of the day) are imported with the sum of
   the intervals received so far and completed by the next export.
 
@@ -169,8 +182,9 @@ same period can be imported any number of times: values are replaced, never adde
 
 - Data is not live: it follows the portal's daily e-mail, typically a day late.
 - Only Gmail is supported as the mailbox, through the Apps Script.
-- One config entry handles one metering point. If the export contains several, set the POD id;
-  add the integration again for more points.
+- One config entry handles one metering point. If the exports contain several (in one file, in
+  several attachments or in separate e-mails), set the POD id, otherwise processing stops with an
+  error instead of mixing their data. Add the integration again for more points.
 - The UI follows the Home Assistant language (English and Hungarian), but statistic names are
   English (e.g. "E.ON consumption").
 - The name of an entry cannot be changed later, because the statistic ids are built from it.
