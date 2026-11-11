@@ -57,6 +57,9 @@
       "last_email": {
         "name": "Utolsó feldolgozott e-mail"
       },
+      "next_check": {
+        "name": "Következő e-mail ellenőrzés"
+      },
       "last_data_import": {
         "name": "Legfrissebb fogyasztási adat"
       },
@@ -77,6 +80,16 @@
         "config_entry_id": {
           "name": "Mérési pont",
           "description": "Csak akkor kell, ha több van beállítva."
+        }
+      }
+    },
+    "check_now": {
+      "name": "E-mailek ellenőrzése most",
+      "description": "Új export levelek lekérése az Apps Scripttől azonnal, akkor is, ha az utolsó levél óta még nem telt el 22 óra.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Mérési pont",
+          "description": "Üresen hagyva mindegyiket ellenőrzi."
         }
       }
     }

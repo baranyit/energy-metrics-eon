@@ -21,26 +21,32 @@ PLATFORMS = [Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 SERVICE_IMPORT_FILE = "import_file"
+SERVICE_CHECK_NOW = "check_now"
 SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("path"): cv.string,
         vol.Optional("config_entry_id"): cv.string,
     }
 )
+CHECK_NOW_SCHEMA = vol.Schema({vol.Optional("config_entry_id"): cv.string})
+
+
+def _loaded_entries(hass: HomeAssistant, entry_id: str | None) -> list[ConfigEntry]:
+    entries = [
+        entry
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.state is ConfigEntryState.LOADED
+    ]
+    if entry_id:
+        entries = [entry for entry in entries if entry.entry_id == entry_id]
+    return entries
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the manual file import service."""
 
     async def import_file(call: ServiceCall) -> ServiceResponse:
-        entries = [
-            entry
-            for entry in hass.config_entries.async_entries(DOMAIN)
-            if entry.state is ConfigEntryState.LOADED
-        ]
-        entry_id = call.data.get("config_entry_id")
-        if entry_id:
-            entries = [entry for entry in entries if entry.entry_id == entry_id]
+        entries = _loaded_entries(hass, call.data.get("config_entry_id"))
         if len(entries) != 1:
             raise ServiceValidationError(
                 "Specify config_entry_id: found "
@@ -80,6 +86,16 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             },
         }
 
+    async def check_now(call: ServiceCall) -> None:
+        entries = _loaded_entries(hass, call.data.get("config_entry_id"))
+        if not entries:
+            raise ServiceValidationError("No matching loaded E.ON W1000 entry")
+        for entry in entries:
+            await entry.runtime_data.async_poll_now()
+
+    hass.services.async_register(
+        DOMAIN, SERVICE_CHECK_NOW, check_now, schema=CHECK_NOW_SCHEMA
+    )
     hass.services.async_register(
         DOMAIN,
         SERVICE_IMPORT_FILE,

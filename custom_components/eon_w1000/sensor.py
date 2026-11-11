@@ -15,7 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN, KIND_EXPORT, KIND_IMPORT
 from .coordinator import EonCoordinator
 
-KEYS = ("last_email", f"last_data_{KIND_IMPORT}", f"last_data_{KIND_EXPORT}")
+KEYS = ("last_email", "next_check", f"last_data_{KIND_IMPORT}", f"last_data_{KIND_EXPORT}")
 
 
 async def async_setup_entry(
@@ -26,7 +26,7 @@ async def async_setup_entry(
 
 
 class EonTimestampSensor(CoordinatorEntity[EonCoordinator], SensorEntity):
-    """Time of the last processed e-mail or the newest imported hour."""
+    """Last processed e-mail, next e-mail check or newest imported hour."""
 
     _attr_has_entity_name = True
     _attr_device_class = SensorDeviceClass.TIMESTAMP
@@ -48,7 +48,7 @@ class EonTimestampSensor(CoordinatorEntity[EonCoordinator], SensorEntity):
     @property
     def native_value(self) -> datetime | None:
         data = self.coordinator.data or {}
-        if self._key == "last_email":
-            return data.get("last_email")
+        if self._key in ("last_email", "next_check"):
+            return data.get(self._key)
         kind = self._key.removeprefix("last_data_")
         return data.get("last_data", {}).get(kind)

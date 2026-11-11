@@ -10,3 +10,11 @@ import_file:
       selector:
         config_entry:
           integration: eon_w1000
+
+check_now:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: eon_w1000

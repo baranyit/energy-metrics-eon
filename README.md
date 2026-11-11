@@ -3,130 +3,154 @@
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz)
 [![Validate](https://github.com/baranyit/eon-energy-metrics/actions/workflows/validate.yml/badge.svg)](https://github.com/baranyit/eon-energy-metrics/actions/workflows/validate.yml)
 
-> *English:* Home Assistant integration that imports hourly electricity
-> consumption and feed-in from E.ON Hungary's W1000 smart meter portal via its
-> scheduled e-mail export (Gmail + Google Apps Script), for the Energy dashboard.
+🇭🇺 **[Magyar nyelvű leírás](README.hu.md)**
 
-Home Assistant custom integration, ami az E.ON távleolvasási portál
+Home Assistant custom integration that imports hourly electricity
+**consumption and feed-in** from the E.ON Hungary smart meter portal
 ([e-portal.eon-hungaria.com/w1000/tavleolv](https://e-portal.eon-hungaria.com/w1000/tavleolv))
-**ütemezett e-mail exportjából** tölti be az órás fogyasztási és visszatáplálási
-adatokat a Home Assistant statisztikáiba.
+into Home Assistant long-term statistics, ready for the **Energy dashboard**.
+It reads the portal's **scheduled e-mail export**.
 
-## Miért e-mailen keresztül?
+## Why e-mail?
 
-A portál teljes egészében Cloudflare bot-védelem mögött van, a bejelentkezés
-pedig reCAPTCHA-t használ, ezért a Home Assistant nem tud közvetlenül belépni és
-lekérdezni. A portál saját ütemezett exportja viszont naponta elküldi az adatokat
-e-mailben, ezt dolgozza fel az integráció:
+The portal sits entirely behind Cloudflare bot protection and its login uses
+reCAPTCHA, so Home Assistant cannot sign in and query it directly. The portal
+can, however, e-mail the data every day, and that is what this integration
+processes:
 
 ```
-E.ON portál ──napi e-mail──▶ Gmail ◀──óránkénti lekérdezés── Home Assistant
-                              (Apps Script)                   (statisztika import)
+E.ON portal ──daily e-mail──▶ Gmail ◀────── polling ────── Home Assistant
+                              (Apps Script)                (statistics import)
 ```
 
-A Home Assistantot nem kell kinyitni az internet felé, és IMAP sem kell.
-Az adatok jellemzően egynapos késéssel érkeznek, de a helyes órákhoz kerülnek.
+Home Assistant does not need to be reachable from the internet, and no IMAP
+is needed. Data typically arrives a day late, but always lands on the right
+hours.
 
-## Telepítés
+## Setup
 
-### 1. Ütemezett export a portálon
+### 1. Scheduled export on the portal
 
-1. Lépj be a portálra, a Távleolvasás oldalon válaszd ki a mérési pontot.
-2. Állíts be ütemezett exportot: **napi** gyakoriság, **negyedórás** (napon
-   belüli) felbontás, a fogyasztás és a visszatáplálás mérőváltozóival
-   (jellemzően `+A` és `-A`), **XLSX** (vagy CSV) formátumban, a Gmail címedre.
-3. A levél tárgya legyen pontosan: `eon-energy-metrics`
-   (ha mást adsz meg, írd át a `QUERY` sort a scriptben).
+1. Sign in to the portal and pick the metering point on the *Távleolvasás*
+   (remote reading) page.
+2. Set up a scheduled export: **daily** frequency, **15-minute** (intraday)
+   resolution, with the consumption and feed-in meter variables (usually `+A`
+   and `-A`), in **XLSX** (or CSV) format, sent to your Gmail address.
+3. Use exactly this e-mail subject: `eon-energy-metrics`
+   (if you choose another one, change the `QUERY` line in the script).
 
-### 2. Apps Script a Gmail fiókodban
+### 2. Apps Script in your Gmail account
 
-1. Nyisd meg a [script.google.com](https://script.google.com) oldalt, **Új projekt**.
-2. Másold be az [apps_script/Code.gs](apps_script/Code.gs) tartalmát, mentsd el.
-3. Válaszd ki a `setup` függvényt, és futtasd. Engedélyezd a Gmail-hozzáférést,
-   majd a **Végrehajtási naplóból** másold ki a tokent.
-4. **Telepítés → Új telepítés → Webalkalmazás**:
-   futtatás *saját nevemben*, hozzáférés: *Bárki*. Másold ki a `…/exec` végű URL-t.
+1. Open [script.google.com](https://script.google.com) and create a **New project**.
+2. Paste the contents of [apps_script/Code.gs](apps_script/Code.gs) and save.
+3. Select the `setup` function and run it. Grant Gmail access, then copy the
+   token from the **Execution log**.
+   Google warns that the app is not verified: that is your own script. Click
+   **Advanced → Go to … (unsafe)**, then **Allow**.
+4. **Deploy → New deployment → Web app**: execute as *Me*, access: *Anyone*.
+   Copy the URL ending in `…/exec`.
 
-A script csak olvas, és csak a megadott tárgyú leveleket adja ki, kizárólag a
-tokennel. A `rotateToken` függvény futtatásával a token bármikor lecserélhető.
-Az engedélykérés a teljes Gmail-hozzáférést említi, mert az Apps Script
-`GmailApp` szolgáltatásának nincs szűkebb jogosultsága.
+The script is read-only and only returns e-mails with the configured subject,
+and only for the token. Run `rotateToken` to replace the token at any time.
+The consent screen mentions full Gmail access because Apps Script's `GmailApp`
+service has no narrower scope.
 
-### 3. Az integráció
+### 3. The integration
 
-1. Telepítsd HACS-ból: **HACS → ⋮ → Egyéni tárolók**, tároló:
-   `https://github.com/baranyit/eon-energy-metrics`, típus: **Integráció**.
-   Ezután keresd meg az „E.ON W1000” integrációt, töltsd le, és indítsd újra
-   a Home Assistantot.
+1. Install via HACS: **HACS → ⋮ → Custom repositories**, repository
+   `https://github.com/baranyit/eon-energy-metrics`, type **Integration**.
+   Then find "E.ON W1000", download it and restart Home Assistant.
 
-   [![HACS tároló megnyitása](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=eon-energy-metrics&category=integration)
+   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=eon-energy-metrics&category=integration)
 
-   Kézi telepítés: másold a `custom_components/eon_w1000` mappát a Home
-   Assistant `config/custom_components` könyvtárába.
-2. **Beállítások → Eszközök és szolgáltatások → Integráció hozzáadása → E.ON W1000**.
-3. Add meg az `…/exec` URL-t, a tokent és az oszlopneveket.
+   Manual install: copy `custom_components/eon_w1000` into Home Assistant's
+   `config/custom_components` directory.
+2. **Settings → Devices & services → Add integration → E.ON W1000**.
+3. Enter the `…/exec` URL, the token and the column names.
 
 ### 4. Energy dashboard
 
-**Beállítások → Irányítópultok → Energia**: a hálózati fogyasztáshoz válaszd az
-`eon_w1000:<név>_import`, a visszatápláláshoz az `eon_w1000:<név>_export`
-statisztikát. Ezek az első sikeres import után jelennek meg.
+**Settings → Dashboards → Energy**: choose `eon_w1000:<name>_import` as grid
+consumption and `eon_w1000:<name>_export` as return to grid. They appear after
+the first successful import.
 
-## Korábbi adatok visszatöltése
+## Backfilling history
 
-A portálról kézzel letöltött CSV/XLSX fájl is importálható. Másold a fájlt a
-Home Assistant egy engedélyezett könyvtárába (pl. `/config/eon/`), majd hívd meg:
+A CSV/XLSX file downloaded by hand from the portal can be imported too. Copy
+it into a directory Home Assistant is allowed to read (e.g. `/config/eon/`)
+and call:
 
 ```yaml
 action: eon_w1000.import_file
 data:
-  path: /config/eon/export.csv
+  path: /config/eon/export.xlsx
 ```
 
-A válaszban látszik, milyen fájltípust és mérőváltozókat talált, és hány órát
-írt be. Ugyanaz az időszak többször is importálható, az értékek felülíródnak,
-nem duplázódnak.
+The response shows the detected file layout, meter variables and the number of
+hours written. The same period can be imported any number of times: values are
+replaced, never added up.
 
-## Működés és korlátok
+## When are e-mails checked?
 
-- Az integráció óránként kérdezi le az új leveleket; az első futáskor az összes
-  korábbi, a keresésre illeszkedő levelet feldolgozza.
-- A negyedórás értékeket órásra összegzi (kWh). Az időbélyegeket magyar helyi
-  időként értelmezi, az őszi óraátállítás ismétlődő óráját is kezeli.
-- Ha az időbélyeg az intervallum **végét** jelöli (az első napi sor `00:15`),
-  kapcsold be a megfelelő beállítást, különben az adatok negyedórával elcsúsznak.
-- Kétféle fájlt ismer fel automatikusan: az ütemezett e-mail exportot
-  (pl. `adatok.xlsx`: mérési pontonként egy munkalap, soronként
-  Pod / Időbélyeg / Változó / Érték / Mértékegység) és a portálról kézzel
-  letöltött táblát (`MertErtekek_*.xlsx`: `Dátum/Idő`, `+A`, `-A` oszlopok).
-  A Wh és MWh értékeket kWh-ra váltja.
-- Ha egy csatolmányt nem tud értelmezni, megáll, és a hibaüzenetben kiírja a
-  fájlban talált mérőváltozókat. A beállítás javítása után onnan folytatja.
-- Egy beállított bejegyzés egy mérési pontot kezel. Ha az export több mérési
-  pontot tartalmaz, a beállításoknál add meg a POD azonosítót; több mérési
-  ponthoz vedd fel az integrációt többször.
-- Az adatokat negyedórás szinten fésüli össze: egy negyedóra új értéke
-  felülírja a korábbit, a fájlból hiányzó negyedórák pedig megtartják a már
-  tárolt értéküket. Az órás értékeket mindig ebből számolja újra, így az
-  átfedő vagy ismételten elküldött adatok nem adódnak össze, és egy hiányos
-  fájl nem csökkentheti egy már teljes óra fogyasztását.
-- Egy még nem teljes óra (pl. a nap végén levágott export) a meglévő
-  negyedórák összegével kerül be, és a következő exporttal kiegészül.
-- Három diagnosztikai érzékelő mutatja az utolsó feldolgozott e-mail és a
-  legfrissebb importált adat idejét.
+E.ON sends the export once a day, so the integration does not poll needlessly:
 
-## Fejlesztés
+- For **22 hours after the last processed e-mail** it does not poll at all.
+- After that it asks the Apps Script **every hour** until the next e-mail
+  arrives, then pauses for 22 hours again. The daily e-mail is therefore
+  imported within an hour, with only a few requests per day.
+- The 2-hour margin covers an e-mail arriving somewhat earlier than the day
+  before.
+- On first start, and until the first e-mail has been processed, it polls
+  hourly; the first run processes all earlier e-mails matching the search.
+- If an e-mail cannot be read, it retries hourly, ignoring the pause, until the
+  problem is fixed.
+- The **Next e-mail check** sensor shows when the next poll happens. To check
+  right away (e.g. when the e-mail came earlier than usual):
 
-Az értelmező és az összefésülés Home Assistant nélkül tesztelhető:
+  ```yaml
+  action: eon_w1000.check_now
+  ```
+
+## How it works, limitations
+
+- 15-minute values are summed into hourly kWh. Timestamps are read as
+  Hungarian local time; the repeated hour at the autumn DST change is handled.
+- If a timestamp marks the **end** of its interval (the first row of a day is
+  `00:15`), enable the corresponding option, otherwise data shifts by 15 minutes.
+- Two layouts are detected automatically: the scheduled e-mail export (e.g.
+  `adatok.xlsx`: one sheet per metering point, rows of
+  Pod / Időbélyeg / Változó / Érték / Mértékegység) and the table downloaded
+  from the portal (`MertErtekek_*.xlsx`: `Dátum/Idő`, `+A`, `-A` columns).
+  Wh and MWh are converted to kWh.
+- If an attachment cannot be read, processing stops and the error lists the
+  meter variables found in the file. After fixing the settings it continues
+  from there.
+- One config entry handles one metering point. If the export contains several,
+  set the POD id in the options; add the integration again for more points.
+- Data is merged per 15-minute interval: a new value replaces the stored one,
+  and intervals missing from a file keep their stored value. Hourly values are
+  always recomputed from these, so overlapping or re-sent data is never added
+  up and an incomplete file can never lower an hour that was already complete.
+- An incomplete hour (e.g. an export cut off at the end of the day) is imported
+  with the sum of the intervals received so far and completed by the next export.
+- Four diagnostic sensors show the last processed e-mail, the next check and
+  the newest imported data.
+- The UI follows the Home Assistant language (English and Hungarian);
+  statistic names are English (e.g. "E.ON consumption").
+
+## Development
+
+The parser, the merging and the polling schedule can be tested without Home
+Assistant:
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-A portál belső API-ja (referenciaként, böngészőn kívülről nem érhető el):
-`/sap/opu/odata/sap/ZWB5_ONLINE_SRV/Login` (belépés, reCAPTCHA tokennel) és
-`/sap/opu/odata/sap/ZWB5_W1000/MeasData(...)` (idősorok, `Bearer <guid>`).
+The portal's internal API, for reference (not reachable outside a browser):
+`/sap/opu/odata/sap/ZWB5_ONLINE_SRV/Login` (login, with a reCAPTCHA token) and
+`/sap/opu/odata/sap/ZWB5_W1000/MeasData(...)` (time series, `Bearer <guid>`).
 
-## Licenc
+## License
 
-MIT, lásd: [LICENSE](LICENSE). A projekt nem kapcsolódik az E.ON-hoz.
+MIT, see [LICENSE](LICENSE). This project is not affiliated with E.ON.

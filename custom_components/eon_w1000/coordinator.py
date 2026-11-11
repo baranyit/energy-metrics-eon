@@ -34,6 +34,7 @@ from .const import (
 )
 from .merge import hourly_from_intervals, merge_intervals
 from .parser import ParsedExport, ParseError, parse_export
+from .schedule import next_check, should_poll
 from .statistics import async_import_hourly
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,7 +92,12 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
             self._state.setdefault("last_data", {})
             # kind -> UTC day -> {"step": minutes, "v": [kWh per interval]}
             self._state.setdefault("intervals", {})
+            # True while an e-mail is waiting to be (re)processed after an error
+            self._state.setdefault("retry", False)
         return self._state
+
+    def _last_email(self, state: dict) -> datetime | None:
+        return dt_util.parse_datetime(state["last_email"]) if state["last_email"] else None
 
     async def async_import_parsed(self, parsed: ParsedExport) -> dict[str, dict[datetime, float]]:
         """Merge a parsed file into the stored intervals and update statistics.
@@ -124,9 +130,13 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
 
     def _public_data(self, state: dict) -> dict:
         return {
-            "last_email": dt_util.parse_datetime(state["last_email"])
-            if state["last_email"]
-            else None,
+            "last_email": self._last_email(state),
+            "next_check": next_check(
+                dt_util.utcnow(),
+                self._last_email(state),
+                state["retry"],
+                self.update_interval or UPDATE_INTERVAL,
+            ),
             "last_data": {
                 kind: dt_util.parse_datetime(value)
                 for kind, value in state["last_data"].items()
@@ -135,6 +145,11 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
 
     async def _async_update_data(self) -> dict:
         state = await self._load_state()
+
+        # The export arrives once a day: skip polling for a while after the
+        # newest processed e-mail (see schedule.py).
+        if not should_poll(dt_util.utcnow(), self._last_email(state), state["retry"]):
+            return self._public_data(state)
 
         for _ in range(MAX_PAGES):
             try:
@@ -156,7 +171,10 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
                         )
                     except ParseError as err:
                         # Stop here without advancing, so the e-mail is retried
-                        # once the configuration (or the parser) is fixed.
+                        # (hourly, ignoring the quiet period) once the
+                        # configuration or the parser is fixed.
+                        state["retry"] = True
+                        await self._store.async_save(state)
                         raise UpdateFailed(
                             f"Cannot read '{attachment.name}' from the e-mail "
                             f"'{message.subject}': {err}"
@@ -177,7 +195,16 @@ class EonCoordinator(DataUpdateCoordinator[dict]):
             if len(messages) < PAGE_LIMIT:
                 break
 
+        if state["retry"]:
+            state["retry"] = False
+            await self._store.async_save(state)
         return self._public_data(state)
+
+    async def async_poll_now(self) -> None:
+        """Ask for new e-mails now, ignoring the quiet period."""
+        state = await self._load_state()
+        state["retry"] = True  # cleared again by a successful poll
+        await self.async_refresh()
 
     async def async_refresh_public_data(self) -> None:
         """Push stored state to entities after a manual file import."""

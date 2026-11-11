@@ -24,6 +24,6 @@ SEEN_IDS_KEPT = 500
 
 KIND_IMPORT = "import"
 KIND_EXPORT = "export"
-KIND_NAMES = {KIND_IMPORT: "fogyasztás", KIND_EXPORT: "visszatáplálás"}
+KIND_NAMES = {KIND_IMPORT: "consumption", KIND_EXPORT: "feed-in"}
 
 DATA_EXTENSIONS = (".csv", ".xlsx", ".txt")
