@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "E.ON W1000 e-mail export",
+        "title": "Energy Monitoring for E.ON Hungary",
         "description": "Enter the URL and token of the Apps Script web app deployed in your Gmail account (see the README).",
         "data": {
           "name": "Name",
@@ -21,7 +21,7 @@
         }
       },
       "reconfigure": {
-        "title": "E.ON W1000 settings",
+        "title": "Energy Monitoring for E.ON Hungary settings",
         "data": {
           "name": "Name (cannot be changed)",
           "script_url": "Apps Script web app URL (…/exec)",

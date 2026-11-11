@@ -1,8 +1,8 @@
-"""Constants for the E.ON W1000 integration."""
+"""Constants for the Energy Monitoring for E.ON Hungary integration."""
 
 from datetime import timedelta
 
-DOMAIN = "eon_w1000"
+DOMAIN = "energy_metrics_eon"
 
 CONF_SCRIPT_URL = "script_url"
 CONF_TOKEN = "token"

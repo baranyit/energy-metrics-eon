@@ -5,8 +5,8 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-_PATH = Path(__file__).parents[1] / "custom_components" / "eon_w1000" / "schedule.py"
-_spec = importlib.util.spec_from_file_location("eon_w1000_schedule", _PATH)
+_PATH = Path(__file__).parents[1] / "custom_components" / "energy_metrics_eon" / "schedule.py"
+_spec = importlib.util.spec_from_file_location("energy_metrics_eon_schedule", _PATH)
 schedule = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(schedule)
 

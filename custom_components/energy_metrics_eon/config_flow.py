@@ -1,4 +1,4 @@
-"""Config flow for E.ON W1000."""
+"""Config flow for Energy Monitoring for E.ON Hungary."""
 
 from __future__ import annotations
 

@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "E.ON W1000 e-mail export",
+        "title": "Energy Monitoring for E.ON Hungary",
         "description": "Add meg a Gmail fiókodban közzétett Apps Script webalkalmazás címét és a tokent (részletek a README-ben).",
         "data": {
           "name": "Név",
@@ -21,7 +21,7 @@
         }
       },
       "reconfigure": {
-        "title": "E.ON W1000 beállításai",
+        "title": "Energy Monitoring for E.ON Hungary beállításai",
         "data": {
           "name": "Név (nem módosítható)",
           "script_url": "Apps Script webalkalmazás URL (…/exec)",
