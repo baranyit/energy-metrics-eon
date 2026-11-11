@@ -1,5 +1,5 @@
 {
-  "name": "E.ON W1000 (e-mail export)",
+  "name": "Energy Monitoring for E.ON Hungary",
   "homeassistant": "2024.12.0",
   "render_readme": true
 }

@@ -9,8 +9,8 @@ from pathlib import Path
 import sys
 import unittest
 
-_PATH = Path(__file__).parents[1] / "custom_components" / "eon_w1000" / "parser.py"
-_spec = importlib.util.spec_from_file_location("eon_w1000_parser", _PATH)
+_PATH = Path(__file__).parents[1] / "custom_components" / "energy_metrics_eon" / "parser.py"
+_spec = importlib.util.spec_from_file_location("energy_metrics_eon_parser", _PATH)
 parser = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = parser
 _spec.loader.exec_module(parser)

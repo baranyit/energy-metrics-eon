@@ -9,7 +9,7 @@ import_file:
       required: false
       selector:
         config_entry:
-          integration: eon_w1000
+          integration: energy_metrics_eon
 
 check_now:
   fields:
@@ -17,4 +17,4 @@ check_now:
       required: false
       selector:
         config_entry:
-          integration: eon_w1000
+          integration: energy_metrics_eon

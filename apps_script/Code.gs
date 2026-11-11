@@ -1,5 +1,5 @@
 /**
- * E.ON W1000 export -> Home Assistant bridge (pull mode).
+ * Energy Monitoring for E.ON Hungary: W1000 export -> Home Assistant bridge (pull mode).
  *
  * Runs in your own Gmail account. The Home Assistant integration fetches the
  * attachments of the E.ON scheduled export e-mails from it with a POST
@@ -11,7 +11,7 @@
 
 // Gmail search matching the export e-mails. You choose the subject when
 // setting up the scheduled export on the portal; keep it unique.
-const QUERY = 'subject:"eon-energy-metrics" has:attachment';
+const QUERY = 'subject:"energy-metrics-eon" has:attachment';
 
 // Maximum number of messages in one response.
 const MAX_LIMIT = 10;

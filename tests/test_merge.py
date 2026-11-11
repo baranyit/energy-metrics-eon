@@ -5,8 +5,8 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-_PATH = Path(__file__).parents[1] / "custom_components" / "eon_w1000" / "merge.py"
-_spec = importlib.util.spec_from_file_location("eon_w1000_merge", _PATH)
+_PATH = Path(__file__).parents[1] / "custom_components" / "energy_metrics_eon" / "merge.py"
+_spec = importlib.util.spec_from_file_location("energy_metrics_eon_merge", _PATH)
 merge = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(merge)
 

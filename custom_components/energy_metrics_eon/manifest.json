@@ -1,0 +1,13 @@
+{
+  "domain": "energy_metrics_eon",
+  "name": "Energy Monitoring for E.ON Hungary",
+  "codeowners": ["@baranyit"],
+  "config_flow": true,
+  "dependencies": ["recorder"],
+  "documentation": "https://github.com/baranyit/energy-metrics-eon",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/baranyit/energy-metrics-eon/issues",
+  "requirements": ["openpyxl>=3.1.0"],
+  "version": "0.1.0"
+}

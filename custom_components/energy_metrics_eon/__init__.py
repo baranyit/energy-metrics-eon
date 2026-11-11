@@ -1,4 +1,4 @@
-"""E.ON W1000 smart meter data via scheduled e-mail exports."""
+"""Energy Monitoring for E.ON Hungary: W1000 smart meter data via scheduled e-mail exports."""
 
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         if len(entries) != 1:
             raise ServiceValidationError(
                 "Specify config_entry_id: found "
-                f"{len(entries)} matching loaded E.ON W1000 entries"
+                f"{len(entries)} matching loaded Energy Monitoring for E.ON Hungary entries"
             )
         coordinator: EonCoordinator = entries[0].runtime_data
 
@@ -89,7 +89,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     async def check_now(call: ServiceCall) -> None:
         entries = _loaded_entries(hass, call.data.get("config_entry_id"))
         if not entries:
-            raise ServiceValidationError("No matching loaded E.ON W1000 entry")
+            raise ServiceValidationError("No matching loaded Energy Monitoring for E.ON Hungary entry")
         for entry in entries:
             await entry.runtime_data.async_poll_now()
 
