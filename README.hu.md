@@ -57,15 +57,16 @@ E.ON portál ──napi e-mail──▶ Gmail ◀────── lekérdezés
 
 ## Telepítés
 
-HACS-ból (egyéni tárolóként) vagy kézi másolással:
+1. Telepítsd az integrációt, majd indítsd újra a Home Assistantot:
+   - **HACS (ajánlott):** nyisd meg a HACS-t, keress rá az **Energy Monitoring for E.ON Hungary**
+     integrációra, és töltsd le.
 
-1. HACS → ⋮ → Egyéni tárolók → add hozzá a `https://github.com/baranyit/energy-metrics-eon`
-   címet *Integráció* típussal, telepítsd az **Energy Monitoring for E.ON Hungary** integrációt,
-   majd indítsd újra a Home Assistantot.
-   Kézzel: másold a `custom_components/energy_metrics_eon` mappát a Home Assistant `custom_components`
-   könyvtárába.
-
-   [![HACS tároló megnyitása](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=energy-metrics-eon&category=integration)
+     [![HACS tároló megnyitása](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=energy-metrics-eon&category=integration)
+   - **HACS egyéni tároló** (ha a keresés nem találja): HACS → ⋮ → Egyéni tárolók → add hozzá a
+     `https://github.com/baranyit/energy-metrics-eon` címet *Integráció* típussal, majd töltsd le
+     a fenti módon.
+   - **Kézzel:** másold a `custom_components/energy_metrics_eon` mappát a Home Assistant
+     `custom_components` könyvtárába.
 2. Beállítások → Eszközök és szolgáltatások → Integráció hozzáadása →
    **Energy Monitoring for E.ON Hungary** (az alábbi [beállítási](#beállítás) lépések után,
    mert azokból kapod meg a kért URL-t és tokent).

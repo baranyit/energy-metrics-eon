@@ -57,13 +57,16 @@ E.ON portal ──daily e-mail──▶ Gmail ◀────── polling ─�
 
 ## Installation
 
-HACS (custom repository) or manual copy:
+1. Install the integration, then restart Home Assistant:
+   - **HACS (recommended):** open HACS, search for **Energy Monitoring for E.ON Hungary** and
+     download it.
 
-1. HACS → ⋮ → Custom repositories → add `https://github.com/baranyit/energy-metrics-eon`
-   as an *Integration*, install **Energy Monitoring for E.ON Hungary**, restart Home Assistant.
-   Manual: copy `custom_components/energy_metrics_eon` into your Home Assistant `custom_components`.
-
-   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=energy-metrics-eon&category=integration)
+     [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=baranyit&repository=energy-metrics-eon&category=integration)
+   - **HACS custom repository** (if it does not show up in the search): HACS → ⋮ → Custom
+     repositories → add `https://github.com/baranyit/energy-metrics-eon` as an *Integration*,
+     then download it as above.
+   - **Manual:** copy `custom_components/energy_metrics_eon` into your Home Assistant
+     `custom_components` folder.
 2. Settings → Devices & services → Add integration → **Energy Monitoring for E.ON Hungary**
    (after the [setup](#setup) steps below, which give you the URL and the token it asks for).
 
